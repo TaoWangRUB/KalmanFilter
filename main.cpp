@@ -14,35 +14,47 @@ void build_kalman_constant(void);
 void build_kalman_linear(void);
 int main() {
     /// build 1d constant model
-    //build_kalman_constant();
+    build_kalman_constant();
     /// build 2d linear model
-    build_kalman_linear();
+    //build_kalman_linear();
 }
 
-/*void build_kalman_constant()
+void build_kalman_constant()
 {
-    double w = 1000.;
-    Kalman_Constant model(1.);
+    double x0 = 10., p0 = 100*100.;
+    double sigma = 0.1, q = 0.15;
+    //std::vector<double> yt{48.54, 47.11, 55.01, 55.15, 49.89, 40.85, 46.72, 50.05, 51.27, 49.95};
+    //std::vector<double> y0{49.979, 50.025, 50, 50.003, 49.994, 50.002, 49.999, 50.006, 49.998, 49.991};
+    //std::vector<double> yt{49.95, 49.967, 50.1, 50.106, 49.992, 49.819, 49.933, 50.007, 50.023, 49.99};
+    std::vector<double> y0{50.479, 51.025, 51.5, 52.003, 52.494, 53.002, 53.499, 54.006, 54.498, 54.991};
+    std::vector<double> yt{50.45, 50.967, 51.6, 52.106, 52.492, 52.819, 53.433, 54.007, 54.523, 54.99};
+    Kalman_Constant model(sigma, q);
     std::default_random_engine generator;
     std::normal_distribution<double> distribution(1010,100.0);
 
-    std::vector<double> tn, xn, yn, gn;
+    std::vector<double> tn, yPred, yEsti, yMeas, gn, pn;
     int t = 0;
     while (t < MAXN) {
         t++;
-        auto wt = model.compute_state_predict(w);
-        auto yt = distribution(generator);
-        auto gain = model.compute_gain(t);
-        w = model.compute_state_update(yt);
+        auto xt = model.compute_state_predict(x0);
+        //auto yt = distribution(generator);
+        auto pt = model.compute_uncertainty_predict(p0);
+        auto gain = model.compute_gain();
+        x0 = model.compute_state_update(yt[t-1]);
+        p0 = model.compute_uncertainty_estimate();
         tn.push_back(t);
-        xn.push_back(w);
-        yn.push_back(yt);
+        yPred.push_back(xt);
+        yMeas.push_back(yt[t-1]);
+        yEsti.push_back(x0);
+        pn.push_back(p0);
         gn.push_back(gain);
     }
     // plot measure / estimate result
-    plt::plot(tn, yn, {{"marker", "o"}, {"label", "measured"}});
-    plt::plot(tn, xn, {{"label", "estimat"}});
-    plt::axhline(1010, {{"c", "red"}, {"ls", "-"}});
+    //plt::plot(tn, yPred, {{"marker", "o"}, {"fillstyle", "none"}, {"label", "predict"}});
+    plt::plot(tn, yMeas, {{"marker", "^"}, {"fillstyle", "none"}, {"label", "measure"}});
+    plt::plot(tn, yEsti, {{"marker", "s"}, {"fillstyle", "none"}, {"label", "estimat"}});
+    //plt::axhline(50, {{"c", "red"}, {"ls", "-"}, {"label", "true"}});
+    plt::plot(tn, y0, {{"c", "red"}, {"ls", "-"}, {"label", "true"}});
     // Set x-axis limit
     //plt::xlim(0, 1000*1000);
     // Add graph title
@@ -57,8 +69,15 @@ int main() {
     plt::title("Kalman Filter gain");
     //plt::show();
     plt::savefig("./gain_1d.pdf");
+    plt::clf();
+    // plot estimate uncertainty
+    plt::plot(tn, pn, {{"marker", "o"}, {"markerfacecolor", "None"}, {"label", "estimate"}});
+    plt::axhline(0.01, {{"c", "red"}, {"ls", "-"}, {"label", "estimate"}});
+    plt::title("Kalman Filter uncertainty");
+    //plt::show();
+    plt::savefig("./uncertainty_1d.pdf");
 }
-*/
+
 void build_kalman_linear()
 {
     double dt = 5; // unit s
